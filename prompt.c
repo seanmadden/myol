@@ -1,8 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-// Input buffer
-const int BUFFER_SIZE = 2048;
-static char buffer[BUFFER_SIZE];
+#include <editline/readline.h>
 
 int main(int argc, char** argv) {
 	
@@ -11,11 +10,12 @@ int main(int argc, char** argv) {
 	puts("Press Ctrl-c to exit\n");
 
 	while (1) {
-		fputs("lispy> ", stdout);
+		char* input = readline("lispy> ");
+		add_history(input);
 
-		fgets(buffer, BUFFER_SIZE, stdin);
+		printf("No you're a %s\n", input);
 
-		printf("No you're a %s", buffer);
+		free(input);
 	}
 
 	return 0;
