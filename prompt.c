@@ -3,6 +3,7 @@
 
 #include <editline/readline.h>
 #include "dependencies/mpc.h"
+#include "lval_core.h"
 
 long eval(mpc_ast_t* node);
 long eval_op(long x, char* op, long y);
