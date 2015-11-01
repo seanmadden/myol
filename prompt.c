@@ -4,6 +4,42 @@
 #include <editline/readline.h>
 #include "dependencies/mpc.h"
 
+long eval(mpc_ast_t* node);
+long eval_op(long x, char* op, long y);
+
+long eval(mpc_ast_t* node) {
+    //base case: number
+    if (strstr(node->tag, "number")) {
+        return atoi(node->contents);
+    }
+
+    //operator is always the second child
+    char* operator = node->children[1]->contents;
+
+    //third child
+    long x = eval(node->children[2]);
+
+    int i = 3;
+    //Loop over the remaining expressions
+    while (strstr(node->children[i]->tag, "expr")) {
+        x = eval_op(x, operator, eval(node->children[i]));
+        i++;
+    }
+
+    return x;
+}
+
+/*
+ * Check operator string to see which operation to perform 
+ */
+long eval_op(long x, char* op, long y) {
+    if (strcmp(op, "+") == 0) { return x + y; }
+    if (strcmp(op, "-") == 0) { return x - y; }
+    if (strcmp(op, "*") == 0) { return x * y; }
+    if (strcmp(op, "/") == 0) { return x / y; }
+    return 0;
+}
+
 int main(int argc, char** argv) {
     
     //Let's define the grammar 
@@ -32,7 +68,8 @@ int main(int argc, char** argv) {
 
         mpc_result_t result;
         if (mpc_parse("<stdin>", input, Lispy, &result)) {
-            mpc_ast_print(result.output);
+            long value = eval(result.output);
+            printf(" %li \n", value);
             mpc_ast_delete(result.output);
         } else {
             //Parsing error
