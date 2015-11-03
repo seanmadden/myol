@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 typedef struct {
     int type;
     long num;
@@ -18,3 +20,4 @@ enum {
 lval lval_num(long number);
 lval lval_err(int errorId);
 void lval_print(lval val);
+void lval_println(lval val);

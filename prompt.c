@@ -5,20 +5,22 @@
 #include "dependencies/mpc.h"
 #include "lval_core.h"
 
-long eval(mpc_ast_t* node);
-long eval_op(long x, char* op, long y);
+lval eval(mpc_ast_t* node);
+lval eval_op(lval x, char* op, lval y);
 
-long eval(mpc_ast_t* node) {
+lval eval(mpc_ast_t* node) {
     //base case: number
     if (strstr(node->tag, "number")) {
-        return atoi(node->contents);
+        errno = 0;
+        long x = strtol(node->contents, NULL, 10);
+        return errno != ERANGE ? lval_num(x) : lval_err(LERR_BAD_NUM);
     }
 
     //operator is always the second child
     char* operator = node->children[1]->contents;
 
     //third child
-    long x = eval(node->children[2]);
+    lval x = eval(node->children[2]);
 
     int i = 3;
     //Loop over the remaining expressions
@@ -33,12 +35,18 @@ long eval(mpc_ast_t* node) {
 /*
  * Check operator string to see which operation to perform 
  */
-long eval_op(long x, char* op, long y) {
-    if (strcmp(op, "+") == 0) { return x + y; }
-    if (strcmp(op, "-") == 0) { return x - y; }
-    if (strcmp(op, "*") == 0) { return x * y; }
-    if (strcmp(op, "/") == 0) { return x / y; }
-    return 0;
+lval eval_op(lval x, char* op, lval y) {
+    if (x.type == LVAL_ERR) { return x; }
+    if (y.type == LVAL_ERR) { return y; }
+
+    if (strcmp(op, "+") == 0) { return lval_num(x.num + y.num); }
+    if (strcmp(op, "-") == 0) { return lval_num(x.num - y.num); }
+    if (strcmp(op, "*") == 0) { return lval_num(x.num * y.num); }
+    if (strcmp(op, "/") == 0) { 
+        return y.num == 0 ? lval_err(LERR_DIV_ZERO) : lval_num(x.num / y.num);
+    }
+    
+    return lval_err(LERR_BAD_OP);
 }
 
 int main(int argc, char** argv) {
@@ -69,8 +77,8 @@ int main(int argc, char** argv) {
 
         mpc_result_t result;
         if (mpc_parse("<stdin>", input, Lispy, &result)) {
-            long value = eval(result.output);
-            printf(" %li \n", value);
+            lval value = eval(result.output);
+            lval_println(value);
             mpc_ast_delete(result.output);
         } else {
             //Parsing error
